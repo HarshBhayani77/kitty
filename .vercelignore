@@ -1,0 +1,8 @@
+# Ignore Python desktop application and scripts from Vercel build
+KittyAI
+extra
+*.py
+*.bat
+*.sh
+*.log
+pyrightconfig.json
