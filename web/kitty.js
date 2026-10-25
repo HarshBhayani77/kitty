@@ -1,5 +1,5 @@
 /**
- * Kitty AI — Procedural Vector Canvas Engine & Companion Simulator
+ * Kitty — Procedural Vector Canvas Engine & Companion Simulator
  * Replicates the PyQt6 QPainter rendering from KittyAI/ui/pet_window.py 1:1 in Web Canvas.
  */
 
@@ -8,7 +8,7 @@
 // -----------------------------------------------------------------------------
 const COAT_SKINS = {
   black: {
-    name: "Midnight Black Cat",
+    name: "Midnight Black",
     body: "#1c1c22",
     belly: "#2d2d38",
     eyes: "#f2c14e",
@@ -38,7 +38,7 @@ const COAT_SKINS = {
     points: "#4a3728"
   },
   calico: {
-    name: "Calico Cat",
+    name: "Calico",
     body: "#ffffff",
     belly: "#ffffff",
     eyes: "#f39c12",
@@ -60,7 +60,7 @@ const COAT_SKINS = {
 };
 
 // -----------------------------------------------------------------------------
-// 2. Web Audio Synthesizer (Zero audio files needed, 100% synthesized)
+// 2. Web Audio Synthesizer (Zero external audio files needed)
 // -----------------------------------------------------------------------------
 class SoundSynth {
   constructor() {
@@ -98,7 +98,7 @@ class SoundSynth {
         const env = 0.5 + 0.5 * Math.sin(2 * Math.PI * 3 * t);
         val += 0.3 * Math.sin(2 * Math.PI * 56 * t) * env;
         val += 0.1 * Math.sin(2 * Math.PI * 84 * t) * env;
-        data[i] = val * env * 0.45;
+        data[i] = val * env * 0.42;
       }
 
       const source = this.ctx.createBufferSource();
@@ -117,7 +117,7 @@ class SoundSynth {
 
     try {
       const sampleRate = 22050;
-      const duration = 0.42;
+      const duration = 0.4;
       const buffer = this.ctx.createBuffer(1, sampleRate * duration, sampleRate);
       const data = buffer.getChannelData(0);
 
@@ -128,7 +128,7 @@ class SoundSynth {
         if (t < 0.16) {
           freq = 450 + (350 * (t / 0.16));
         } else {
-          freq = 800 - (250 * ((t - 0.16) / 0.26));
+          freq = 800 - (250 * ((t - 0.16) / 0.24));
         }
         let val = Math.sin(2 * Math.PI * freq * t);
         val += 0.4 * Math.sin(2 * Math.PI * (freq * 2) * t);
@@ -137,10 +137,10 @@ class SoundSynth {
         let env = 1.0;
         if (t < 0.04) {
           env = t / 0.04;
-        } else if (t > 0.32) {
-          env = Math.max(0, 1.0 - ((t - 0.32) / 0.1));
+        } else if (t > 0.3) {
+          env = Math.max(0, 1.0 - ((t - 0.3) / 0.1));
         }
-        data[i] = val * env * 0.38;
+        data[i] = val * env * 0.35;
       }
 
       const source = this.ctx.createBufferSource();
@@ -231,33 +231,64 @@ class KittyCanvasEngine {
   }
 
   _initEvents() {
-    // Global mouse tracking for pupil movement
+    // Mouse tracking for pupil movement
     window.addEventListener('mousemove', (e) => {
       this.cursorX = e.clientX;
       this.cursorY = e.clientY;
     });
 
-    // Drag-and-drop on canvas
     const anchor = document.getElementById('kittyAnchor');
     const stage = document.getElementById('stageArea');
+    const bubble = document.getElementById('speechBubble');
+    const chat = document.getElementById('chatWindow');
+
+    // Prevent clicks inside telemetry bubble or chat window from bubbling up to Kitty
+    if (bubble) {
+      bubble.addEventListener('click', (e) => e.stopPropagation());
+      bubble.addEventListener('mousedown', (e) => e.stopPropagation());
+    }
+    if (chat) {
+      chat.addEventListener('click', (e) => e.stopPropagation());
+      chat.addEventListener('mousedown', (e) => e.stopPropagation());
+    }
+
+    // Drag-and-drop state on canvas
+    this.isPointerDown = false;
+    this.hasMoved = false;
+    this.startClientX = 0;
+    this.startClientY = 0;
 
     const onPointerDown = (e) => {
       this.synth._initContext();
-      this.isDragging = true;
+      this.isPointerDown = true;
+      this.hasMoved = false;
+
+      const clientX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+      const clientY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
+      this.startClientX = clientX;
+      this.startClientY = clientY;
+
       const rect = anchor.getBoundingClientRect();
-      this.dragOffsetX = (e.clientX || (e.touches && e.touches[0].clientX)) - rect.left;
-      this.dragOffsetY = (e.clientY || (e.touches && e.touches[0].clientY)) - rect.top;
+      this.dragOffsetX = clientX - rect.left;
+      this.dragOffsetY = clientY - rect.top;
 
       const hints = document.getElementById('stageHints');
       if (hints) hints.style.opacity = '0';
     };
 
     const onPointerMove = (e) => {
-      if (!this.isDragging) return;
-      const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-      const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+      if (!this.isPointerDown) return;
+      const clientX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+      const clientY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
 
-      // If floating companion mode
+      const dist = Math.hypot(clientX - this.startClientX, clientY - this.startClientY);
+      if (dist > 6) {
+        this.hasMoved = true;
+        this.isDragging = true;
+      }
+
+      if (!this.isDragging) return;
+
       if (document.body.classList.contains('mode-floating-companion')) {
         anchor.style.left = `${clientX - this.dragOffsetX}px`;
         anchor.style.top = `${clientY - this.dragOffsetY}px`;
@@ -273,81 +304,99 @@ class KittyCanvasEngine {
       }
     };
 
-    const onPointerUp = (e) => {
-      if (!this.isDragging) return;
+    const onPointerUp = () => {
+      this.isPointerDown = false;
       this.isDragging = false;
       this.wobbleAngle = 0;
     };
 
-    anchor.addEventListener('mousedown', onPointerDown);
+    this.canvas.addEventListener('mousedown', onPointerDown);
     window.addEventListener('mousemove', onPointerMove);
     window.addEventListener('mouseup', onPointerUp);
 
-    anchor.addEventListener('touchstart', onPointerDown, { passive: true });
+    this.canvas.addEventListener('touchstart', onPointerDown, { passive: true });
     window.addEventListener('touchmove', onPointerMove, { passive: true });
     window.addEventListener('touchend', onPointerUp);
 
-    // Click handler: 1st Click = System Status, 2nd Click / rapid = Meow Chat
-    anchor.addEventListener('click', (e) => {
-      const now = performance.now();
-      const bubble = document.getElementById('speechBubble');
-      const chat = document.getElementById('chatWindow');
+    // Click on Kitty Canvas ONLY (not whole anchor container)
+    this.canvas.addEventListener('click', (e) => {
+      // If user was dragging, do NOT trigger click action
+      if (this.hasMoved) {
+        this.hasMoved = false;
+        return;
+      }
 
       this.spawnHearts();
-      this.synth.playPurr();
 
-      if (bubble.style.display !== 'none' || (now - this.lastClickTime < 3500 && chat.style.display === 'none')) {
-        // 2nd Click -> Open Meow Chat!
-        bubble.style.display = 'none';
-        chat.style.display = 'flex';
-        this.synth.playMeow();
-        this.lastClickTime = 0;
-      } else {
-        // 1st Click -> Show System Status Card
+      const bubbleEl = document.getElementById('speechBubble');
+      const chatEl = document.getElementById('chatWindow');
+      const isBubbleOpen = bubbleEl && bubbleEl.style.display !== 'none';
+      const isChatOpen = chatEl && chatEl.style.display !== 'none';
+
+      if (!isBubbleOpen && !isChatOpen) {
+        // 1st click: Open Hardware HUD snapshot
         this.updateSystemStatus();
-        bubble.style.display = 'block';
-        this.lastClickTime = now;
+        if (bubbleEl) bubbleEl.style.display = 'block';
+        this.synth.playPurr();
+      } else if (isBubbleOpen && !isChatOpen) {
+        // 2nd click: Transition from HUD to Console
+        if (bubbleEl) bubbleEl.style.display = 'none';
+        if (chatEl) chatEl.style.display = 'flex';
+        this.synth.playMeow();
+      } else {
+        // Already interacting: pet kitty
+        this.synth.playPurr();
       }
     });
   }
 
   updateSystemStatus() {
-    // Dynamic slight fluctuations for realistic HUD simulation
-    this.telemetry.cpu = Math.floor(14 + Math.random() * 18);
-    this.telemetry.ram = (4.8 + Math.random() * 1.6).toFixed(1);
-    this.telemetry.gpu = Math.floor(18 + Math.random() * 20);
+    this.telemetry.cpu = Math.floor(14 + Math.random() * 16);
+    this.telemetry.ram = (4.8 + Math.random() * 1.4).toFixed(1);
+    this.telemetry.gpu = Math.floor(18 + Math.random() * 18);
 
     const now = new Date();
     const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-    document.getElementById('statusClock').textContent = timeStr;
-    document.getElementById('statCpu').textContent = `${this.telemetry.cpu}%`;
-    document.getElementById('statCpuBar').style.width = `${this.telemetry.cpu}%`;
+    const clock = document.getElementById('statusClock');
+    if (clock) clock.textContent = timeStr;
 
-    document.getElementById('statRam').textContent = `${this.telemetry.ram} GB`;
-    document.getElementById('statRamBar').style.width = `${Math.round((this.telemetry.ram / 16) * 100)}%`;
+    const statCpu = document.getElementById('statCpu');
+    if (statCpu) statCpu.textContent = `${this.telemetry.cpu}%`;
+    const statCpuBar = document.getElementById('statCpuBar');
+    if (statCpuBar) statCpuBar.style.width = `${this.telemetry.cpu}%`;
 
-    document.getElementById('statGpu').textContent = `${this.telemetry.gpu}%`;
-    document.getElementById('statGpuBar').style.width = `${this.telemetry.gpu}%`;
+    const statRam = document.getElementById('statRam');
+    if (statRam) statRam.textContent = `${this.telemetry.ram} GB`;
+    const statRamBar = document.getElementById('statRamBar');
+    if (statRamBar) statRamBar.style.width = `${Math.round((this.telemetry.ram / 16) * 100)}%`;
 
-    const batIcon = this.telemetry.isCharging ? '⚡' : '';
-    document.getElementById('statBat').textContent = `${this.telemetry.battery}% ${batIcon}`;
-    document.getElementById('statBatBar').style.width = `${this.telemetry.battery}%`;
+    const statGpu = document.getElementById('statGpu');
+    if (statGpu) statGpu.textContent = `${this.telemetry.gpu}%`;
+    const statGpuBar = document.getElementById('statGpuBar');
+    if (statGpuBar) statGpuBar.style.width = `${this.telemetry.gpu}%`;
+
+    const statBat = document.getElementById('statBat');
+    if (statBat) {
+      const batIcon = this.telemetry.isCharging ? ' ⚡' : '';
+      statBat.textContent = `${this.telemetry.battery}%${batIcon}`;
+    }
+    const statBatBar = document.getElementById('statBatBar');
+    if (statBatBar) statBatBar.style.width = `${this.telemetry.battery}%`;
   }
 
   spawnHearts() {
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 3; i++) {
       this.hearts.push({
-        x: (Math.random() - 0.5) * 50,
-        y: -30 + (Math.random() - 0.5) * 20,
-        size: 7 + Math.random() * 5,
-        opacity: 1.0,
-        vy: -0.8 - Math.random() * 0.8
+        x: (Math.random() - 0.5) * 44,
+        y: -30 + (Math.random() - 0.5) * 16,
+        size: 7 + Math.random() * 4,
+        opacity: 0.9,
+        vy: -0.7 - Math.random() * 0.7
       });
     }
   }
 
-  // --- Exact Mathematical Fur Blob from pet_window.py ---
   drawFurBlob(cx, cy, rx, ry, fill, tuftLen = 5, n = 22, phase = 0) {
     const ctx = this.ctx;
     ctx.save();
@@ -372,7 +421,6 @@ class KittyCanvasEngine {
     ctx.restore();
   }
 
-  // Darken a hex color
   _darken(hex, factor = 0.7) {
     if (hex.startsWith('#')) hex = hex.slice(1);
     let num = parseInt(hex, 16);
@@ -389,8 +437,8 @@ class KittyCanvasEngine {
     // Blinking logic (80ms quick natural blink)
     if (timestamp > this.nextBlinkTime) {
       this.isBlinking = true;
-      this.blinkEndTime = timestamp + 90;
-      this.nextBlinkTime = timestamp + 3000 + Math.random() * 3500;
+      this.blinkEndTime = timestamp + 85;
+      this.nextBlinkTime = timestamp + 3200 + Math.random() * 3200;
     }
     if (this.isBlinking && timestamp > this.blinkEndTime) {
       this.isBlinking = false;
@@ -446,12 +494,12 @@ class KittyCanvasEngine {
       ctx.save();
       ctx.beginPath();
       ctx.ellipse(0, 48, 30, 6.5, 0, 0, Math.PI * 2);
-      ctx.fillStyle = "rgba(0, 0, 0, 0.28)";
+      ctx.fillStyle = "rgba(0, 0, 0, 0.35)";
       ctx.fill();
       ctx.restore();
     }
 
-    // 2. Fluffy Bushy Tail (Curled calm static silhouette)
+    // 2. Tail
     const tailFur = (pattern === "siamese_points" && pointsColor) ? pointsColor : fur;
     let tailPts = [
       { x: 26, y: 34, r: 12 },
@@ -488,7 +536,7 @@ class KittyCanvasEngine {
       ctx.restore();
     }
 
-    // 3. Spiky Fluffy Ears
+    // 3. Fluffy Ears
     const earFur = (pattern === "siamese_points" && pointsColor) ? pointsColor : fur;
     const ears = this.isDragging ? [{ x: -20, y: -34 }, { x: 20, y: -34 }] : [{ x: -19, y: -42 }, { x: 19, y: -42 }];
     const earInner = this._darken(noseColor, 0.85);
@@ -504,11 +552,10 @@ class KittyCanvasEngine {
       ctx.restore();
     }
 
-    // 4. Fluffy Body
+    // 4. Body
     this.drawFurBlob(0, 22, 30, 26, furDark, 6, 26);
     this.drawFurBlob(0, 22, 27, 23, fur, 5, 24);
 
-    // Calico body patches
     if (pattern === "calico_patches") {
       ctx.save();
       ctx.beginPath();
@@ -524,7 +571,6 @@ class KittyCanvasEngine {
       ctx.restore();
     }
 
-    // Chest sheen
     ctx.save();
     ctx.beginPath();
     ctx.ellipse(0, 24, 11, 13, 0, 0, Math.PI * 2);
@@ -532,7 +578,6 @@ class KittyCanvasEngine {
     ctx.fill();
     ctx.restore();
 
-    // Tabby body stripes
     if (pattern === "stripes") {
       ctx.save();
       ctx.strokeStyle = patColor;
@@ -553,11 +598,10 @@ class KittyCanvasEngine {
       ctx.restore();
     }
 
-    // 5. Fluffy Head
+    // 5. Head
     this.drawFurBlob(0, -18, 33, 30, furDark, 6, 30, 0.15);
     this.drawFurBlob(0, -18, 30, 27, fur, 5, 28, 0.15);
 
-    // Siamese mask
     if (pattern === "siamese_points" && pointsColor) {
       ctx.save();
       ctx.beginPath();
@@ -568,7 +612,6 @@ class KittyCanvasEngine {
       ctx.restore();
     }
 
-    // Calico head patch
     if (pattern === "calico_patches") {
       ctx.save();
       ctx.beginPath();
@@ -578,7 +621,6 @@ class KittyCanvasEngine {
       ctx.restore();
     }
 
-    // Tabby forehead "M"
     if (pattern === "stripes") {
       ctx.save();
       ctx.strokeStyle = patColor;
@@ -594,16 +636,16 @@ class KittyCanvasEngine {
       ctx.restore();
     }
 
-    // 6. Blush Cheeks
+    // 6. Subtle Cheeks
     ctx.save();
     ctx.beginPath();
     ctx.ellipse(-20, -12, 7.5, 4.5, 0, 0, Math.PI * 2);
     ctx.ellipse(20, -12, 7.5, 4.5, 0, 0, Math.PI * 2);
-    ctx.fillStyle = "rgba(255, 130, 140, 0.28)";
+    ctx.fillStyle = "rgba(255, 130, 140, 0.22)";
     ctx.fill();
     ctx.restore();
 
-    // 7. Eyes (Awake, amber sclera, slit pupil following cursor, grumpy eyelids)
+    // 7. Eyes
     const eyeCentres = [{ x: -12, y: -20 }, { x: 12, y: -20 }];
     const erX = 10.0;
     const erY = 11.0;
@@ -624,7 +666,6 @@ class KittyCanvasEngine {
       for (let ec of eyeCentres) {
         const innerSign = ec.x < 0 ? 1 : -1;
 
-        // Amber sclera outer & inner
         ctx.save();
         ctx.beginPath();
         ctx.ellipse(ec.x, ec.y, erX, erY, 0, 0, Math.PI * 2);
@@ -636,19 +677,16 @@ class KittyCanvasEngine {
         ctx.fillStyle = amber;
         ctx.fill();
 
-        // Slit pupil
         ctx.beginPath();
         ctx.ellipse(ec.x + this.pupilDx, ec.y + this.pupilDy, 2.4, 7.5, 0, 0, Math.PI * 2);
         ctx.fillStyle = "#14140f";
         ctx.fill();
 
-        // Gloss highlight
         ctx.beginPath();
         ctx.ellipse(ec.x - 3 + this.pupilDx, ec.y - 5 + this.pupilDy, 1.8, 1.8, 0, 0, Math.PI * 2);
         ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
         ctx.fill();
 
-        // Grumpy stylized upper lid
         if (!this.isDragging) {
           const innerX = ec.x + innerSign * (erX + 1.5);
           const outerX = ec.x - innerSign * (erX + 1.5);
@@ -661,7 +699,6 @@ class KittyCanvasEngine {
           ctx.fillStyle = fur;
           ctx.fill();
 
-          // Brow tuft
           ctx.beginPath();
           ctx.moveTo(outerX, ec.y - erY - 1);
           ctx.lineTo(innerX, ec.y - erY - 4);
@@ -685,7 +722,7 @@ class KittyCanvasEngine {
     ctx.fill();
     ctx.restore();
 
-    // 9. Downturned :3 Mouth & Little White Fang
+    // 9. Mouth & Tiny White Fang
     ctx.save();
     ctx.strokeStyle = furDark;
     ctx.lineWidth = 1.8;
@@ -697,7 +734,6 @@ class KittyCanvasEngine {
     ctx.quadraticCurveTo(5, 3, 10, 0);
     ctx.stroke();
 
-    // Tiny white fang
     ctx.beginPath();
     ctx.moveTo(-6, 1);
     ctx.lineTo(-2.5, 1);
@@ -707,7 +743,7 @@ class KittyCanvasEngine {
     ctx.fill();
     ctx.restore();
 
-    // 10. Whiskers (3 on each side)
+    // 10. Whiskers
     ctx.save();
     ctx.strokeStyle = "rgba(230, 230, 230, 0.65)";
     ctx.lineWidth = 1.3;
@@ -723,10 +759,9 @@ class KittyCanvasEngine {
     }
     ctx.restore();
 
-    // 11. Front Paws / Scruff Dangle
+    // 11. Paws / Scruff Dangle
     let pawColor = (pattern === "siamese_points" && pointsColor) ? pointsColor : fur;
     if (this.isDragging) {
-      // Scruff dangle limbs
       ctx.save();
       for (let sign of [-1, 1]) {
         this.drawFurBlob(sign * 18, 42, 6, 10, furDark, 3, 10);
@@ -734,7 +769,6 @@ class KittyCanvasEngine {
       }
       ctx.restore();
     } else {
-      // Resting cute paws
       ctx.save();
       for (let sign of [-1, 1]) {
         this.drawFurBlob(sign * 14, 40, 8, 7, furDark, 3, 12);
@@ -754,9 +788,9 @@ class KittyCanvasEngine {
         } else {
           ctx.save();
           ctx.font = `${Math.round(h.size)}px sans-serif`;
-          ctx.fillStyle = `rgba(255, 75, 110, ${h.opacity})`;
+          ctx.fillStyle = `rgba(239, 68, 68, ${h.opacity})`;
           ctx.textAlign = 'center';
-          ctx.fillText("❤️", h.x, h.y);
+          ctx.fillText("♥", h.x, h.y);
           ctx.restore();
         }
       }
@@ -769,18 +803,38 @@ class KittyCanvasEngine {
 }
 
 // -----------------------------------------------------------------------------
-// 4. Page UI Controls & Chat Dialog Manager
+// 4. Page UI Controls & Companion Dialogue Engine
 // -----------------------------------------------------------------------------
 document.addEventListener('DOMContentLoaded', () => {
   const canvas = document.getElementById('kittyCanvas');
   const synth = new SoundSynth();
   const kitty = new KittyCanvasEngine(canvas, { synth });
 
-  // Skin Selector
-  const skinButtons = document.querySelectorAll('.skin-btn');
-  skinButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      skinButtons.forEach(b => b.classList.remove('active'));
+  // Close buttons
+  const btnCloseHud = document.getElementById('btnCloseHud');
+  if (btnCloseHud) {
+    btnCloseHud.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const bubble = document.getElementById('speechBubble');
+      if (bubble) bubble.style.display = 'none';
+    });
+  }
+
+  const btnCloseChat = document.getElementById('btnCloseChat');
+  if (btnCloseChat) {
+    btnCloseChat.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const chat = document.getElementById('chatWindow');
+      if (chat) chat.style.display = 'none';
+    });
+  }
+
+  // Coat selector buttons
+  const coatButtons = document.querySelectorAll('.coat-btn, .skin-btn');
+  coatButtons.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      coatButtons.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       const skin = btn.getAttribute('data-skin');
       kitty.setSkin(skin);
@@ -789,130 +843,191 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Action Buttons
-  document.getElementById('btnPetKitty').addEventListener('click', () => {
-    kitty.spawnHearts();
-    synth.playPurr();
-  });
+  const btnPet = document.getElementById('btnPetKitty');
+  if (btnPet) {
+    btnPet.addEventListener('click', (e) => {
+      e.preventDefault();
+      kitty.spawnHearts();
+      synth.playPurr();
+    });
+  }
 
-  document.getElementById('btnInspectHud').addEventListener('click', () => {
-    kitty.updateSystemStatus();
-    const bubble = document.getElementById('speechBubble');
-    bubble.style.display = bubble.style.display === 'none' ? 'block' : 'none';
-    synth.playPurr();
-  });
+  const btnInspect = document.getElementById('btnInspectHud');
+  if (btnInspect) {
+    btnInspect.addEventListener('click', (e) => {
+      e.preventDefault();
+      const bubble = document.getElementById('speechBubble');
+      if (bubble) {
+        const isClosed = bubble.style.display === 'none' || !bubble.style.display;
+        if (isClosed) {
+          kitty.updateSystemStatus();
+          bubble.style.display = 'block';
+          synth.playPurr();
+        } else {
+          bubble.style.display = 'none';
+        }
+      }
+    });
+  }
 
-  document.getElementById('btnToggleChat').addEventListener('click', () => {
-    const chat = document.getElementById('chatWindow');
-    chat.style.display = chat.style.display === 'none' ? 'flex' : 'none';
-    synth.playMeow();
-  });
+  const btnChat = document.getElementById('btnToggleChat');
+  if (btnChat) {
+    btnChat.addEventListener('click', (e) => {
+      e.preventDefault();
+      const chat = document.getElementById('chatWindow');
+      if (chat) {
+        const isClosed = chat.style.display === 'none' || !chat.style.display;
+        chat.style.display = isClosed ? 'flex' : 'none';
+        if (isClosed) synth.playMeow();
+      }
+    });
+  }
 
-  // Toggle Sound Button
+  // Audio Toggle
   const btnToggleSound = document.getElementById('btnToggleSound');
-  btnToggleSound.addEventListener('click', () => {
-    synth.enabled = !synth.enabled;
-    btnToggleSound.textContent = synth.enabled ? '🔊' : '🔇';
-  });
+  const soundIcon = document.getElementById('soundIcon');
+  if (btnToggleSound) {
+    btnToggleSound.addEventListener('click', (e) => {
+      e.preventDefault();
+      synth.enabled = !synth.enabled;
+      if (soundIcon) {
+        soundIcon.textContent = synth.enabled ? 'Audio: ON' : 'Audio: OFF';
+      }
+    });
+  }
 
-  // Float on Screen Companion Mode Toggle
+  // Viewport Companion Mode Toggle
   const btnFloatMode = document.getElementById('btnFloatMode');
-  btnFloatMode.addEventListener('click', () => {
-    const isFloating = document.body.classList.toggle('mode-floating-companion');
-    btnFloatMode.textContent = isFloating ? '📍 Dock to Stage' : '🪟 Float on Screen';
-  });
+  const anchor = document.getElementById('kittyAnchor');
+  if (btnFloatMode && anchor) {
+    btnFloatMode.addEventListener('click', (e) => {
+      e.preventDefault();
+      const isFloating = document.body.classList.toggle('mode-floating-companion');
+      btnFloatMode.textContent = isFloating ? 'Dock in Viewport' : 'Float in Viewport';
+      // Reset inline styles so CSS takes over properly
+      anchor.style.position = '';
+      anchor.style.left = '';
+      anchor.style.top = '';
+      anchor.style.right = '';
+      anchor.style.bottom = '';
+    });
+  }
 
-  // Chat Close Button
-  document.getElementById('btnCloseChat').addEventListener('click', () => {
-    document.getElementById('chatWindow').style.display = 'none';
-  });
-
-  // Chat Responses Engine
+  // Companion Console Dialogue
   const chatMessages = document.getElementById('chatMessages');
   const chatForm = document.getElementById('chatForm');
   const chatInput = document.getElementById('chatInput');
 
   const addChatMessage = (text, sender = 'user') => {
-    const msgDiv = document.createElement('div');
-    msgDiv.className = `chat-msg msg-${sender}`;
-    const bubbleDiv = document.createElement('div');
-    bubbleDiv.className = 'msg-bubble';
-    bubbleDiv.textContent = text;
-    msgDiv.appendChild(bubbleDiv);
-    chatMessages.appendChild(msgDiv);
+    if (!chatMessages) return;
+    const row = document.createElement('div');
+    row.className = `console-row row-${sender === 'user' ? 'user' : 'companion'}`;
+    const bubble = document.createElement('div');
+    bubble.className = 'console-bubble';
+    bubble.textContent = text;
+    row.appendChild(bubble);
+    chatMessages.appendChild(row);
     chatMessages.scrollTop = chatMessages.scrollHeight;
   };
 
-  const generateCatReply = (query) => {
+  const getCompanionResponse = (query) => {
     const q = query.toLowerCase();
-    if (q.includes('joke')) {
-      const jokes = [
-        "Why was the cat sitting on the computer? To keep an eye on the mouse! 😹",
-        "What do you call a pile of kittens? A meowntain! 🏔️",
-        "What is a cat's favorite color? Purr-ple! 💜",
-        "What did the cat say when it broke the vase? It was an undocumented feature, meow! 😼"
-      ];
-      return jokes[Math.floor(Math.random() * jokes.length)];
+
+    if (q.includes('launch') || q.includes('install') || q.includes('desktop') || q.includes('run')) {
+      return "Desktop build: Run .\\run.bat on Windows or ./run.sh on Linux/macOS. Dependencies install automatically in an isolated venv.";
     }
-    if (q.includes('purr')) {
+    if (q.includes('status') || q.includes('diagnostic') || q.includes('hardware') || q.includes('cpu')) {
+      kitty.updateSystemStatus();
+      return `Telemetry: CPU at ${kitty.telemetry.cpu}%, RAM at ${kitty.telemetry.ram} GB, GPU at ${kitty.telemetry.gpu}%. Thermals nominal.`;
+    }
+    if (q.includes('feature') || q.includes('capability') || q.includes('what can you do')) {
+      return "Core capabilities: Procedural vector avatar, non-blocking telemetry (psutil/GPUtil), Pomodoro focus timer, pinned desktop notes, and multi-model LLM chat.";
+    }
+    if (q.includes('audio') || q.includes('sound') || q.includes('purr')) {
       synth.playPurr();
-      return "Purrrrrrrrr... 🎶 Soft vibrations activated! You are an awesome human!";
-    }
-    if (q.includes('desktop') || q.includes('run') || q.includes('install')) {
-      return "To run me right on your actual computer screen: clone the repo and double-click `run.bat` on Windows! I'll sit borderless on top of your windows!";
-    }
-    if (q.includes('who are you') || q.includes('what can you do')) {
-      return "I'm Kitty AI! I am a smart desktop companion built with Python and PyQt6. I track your mouse, monitor CPU/RAM/GPU, chat with Google Gemini, and keep you focused!";
-    }
-    if (q.includes('pomodoro') || q.includes('focus')) {
-      return "Focus time! Paws down and get to work! I'll keep your PC running cool while you code! 🐾";
+      return "Synthesizing 28 Hz low-frequency sine rumble with 3 Hz amplitude modulation. Purr active.";
     }
 
     const defaultReplies = [
-      "Meow! That's interesting! Tell me more human! 🐾",
-      "Mrrrow? I was just checking your CPU temperatures. Everything looks cozy!",
-      "Headbutts your hand gently. 🐱 I'm always here while you work!",
-      "Meow meow! Have you tested switching my coat to Orange Tabby or Siamese yet?"
+      "Query received. Background threads running without interruption.",
+      "Acknowledged. Monitoring hardware state and system responsiveness.",
+      "Meow. Telemetry poll updated. All parameters within safe limits.",
+      "Standing by on the desktop viewport."
     ];
     return defaultReplies[Math.floor(Math.random() * defaultReplies.length)];
   };
 
-  chatForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const text = chatInput.value.trim();
-    if (!text) return;
+  if (chatForm && chatInput) {
+    chatForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const text = chatInput.value.trim();
+      if (!text) return;
 
-    addChatMessage(text, 'user');
-    chatInput.value = '';
+      addChatMessage(text, 'user');
+      chatInput.value = '';
 
-    setTimeout(() => {
-      const reply = generateCatReply(text);
-      addChatMessage(reply, 'kitty');
-      synth.playMeow();
-    }, 450);
-  });
+      setTimeout(() => {
+        const reply = getCompanionResponse(text);
+        addChatMessage(reply, 'companion');
+        synth.playMeow();
+      }, 350);
+    });
+  }
 
-  // Quick suggestion chips
-  document.querySelectorAll('.chip-suggestion').forEach(chip => {
-    chip.addEventListener('click', () => {
+  // Preset chips (auto-open console if closed)
+  document.querySelectorAll('.preset-chip, .chip-suggestion').forEach(chip => {
+    chip.addEventListener('click', (e) => {
+      e.preventDefault();
       const prompt = chip.getAttribute('data-prompt');
+      if (!prompt) return;
+
+      const chat = document.getElementById('chatWindow');
+      if (chat && chat.style.display === 'none') {
+        chat.style.display = 'flex';
+      }
+
       addChatMessage(prompt, 'user');
       setTimeout(() => {
-        const reply = generateCatReply(prompt);
-        addChatMessage(reply, 'kitty');
+        const reply = getCompanionResponse(prompt);
+        addChatMessage(reply, 'companion');
         synth.playMeow();
-      }, 400);
+      }, 300);
     });
   });
 
-  // Copy commands button
+  // Copy command button with fallback
   const btnCopyCommands = document.getElementById('btnCopyCommands');
   if (btnCopyCommands) {
-    btnCopyCommands.addEventListener('click', () => {
+    btnCopyCommands.addEventListener('click', (e) => {
+      e.preventDefault();
       const text = `git clone https://github.com/HarshBhayani77/kitty.git\ncd kitty\n.\\run.bat`;
-      navigator.clipboard.writeText(text).then(() => {
-        btnCopyCommands.textContent = '✓ Copied!';
-        setTimeout(() => { btnCopyCommands.textContent = '📋 Copy'; }, 2000);
-      });
+      
+      const onCopied = () => {
+        btnCopyCommands.textContent = '✓ Copied to Clipboard';
+        setTimeout(() => { btnCopyCommands.textContent = 'Copy Instructions'; }, 2000);
+      };
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(onCopied).catch(() => {
+          fallbackCopy(text, onCopied);
+        });
+      } else {
+        fallbackCopy(text, onCopied);
+      }
     });
+  }
+
+  function fallbackCopy(text, callback) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    try {
+      document.execCommand('copy');
+      if (callback) callback();
+    } catch (err) {}
+    document.body.removeChild(ta);
   }
 });
