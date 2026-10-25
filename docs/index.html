@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kitty AI — Desktop Companion & System Monitor (Live Interactive Demo)</title>
+  <meta name="description" content="Meet Kitty AI: an adorable, procedural vector-drawn desktop pet and real-time hardware companion powered by Python, PyQt6, and AI. Try the live interactive web demo!">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="theme-dark">
+
+  <!-- Top Navigation Bar -->
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="brand">
+        <span class="cat-logo-icon">🐱</span>
+        <span class="brand-name">Kitty<span class="brand-accent">AI</span></span>
+        <span class="badge badge-pulse">Live Demo</span>
+      </div>
+      <nav class="nav-links">
+        <a href="#demo" class="nav-link">Interactive Demo</a>
+        <a href="#features" class="nav-link">Features</a>
+        <a href="#how-it-works" class="nav-link">Architecture</a>
+        <a href="#desktop-setup" class="nav-link">Desktop App</a>
+        <a href="#portfolio-embed" class="nav-link">Portfolio Embed</a>
+      </nav>
+      <div class="nav-actions">
+        <a href="https://github.com/HarshBhayani77/kitty" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline">
+          <svg class="icon-gh" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+          </svg>
+          GitHub Repo
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="hero-bg-glow"></div>
+    <div class="container hero-content">
+      <div class="hero-text">
+        <div class="tagline-pill">
+          <span class="sparkle">✨</span> Python PyQt6 + AI + Vector Animation
+        </div>
+        <h1 class="hero-title">
+          Meet <span class="gradient-text">Kitty AI</span>.<br>
+          Your Desktop Pet & System Guardian.
+        </h1>
+        <p class="hero-subtitle">
+          A procedural vector companion that sits borderless on your desktop. 
+          Tracks your mouse cursor, monitors hardware performance (CPU, RAM, GPU), 
+          purrs when petted, and chats intelligently with Google Gemini & Claude.
+        </p>
+        <div class="hero-cta-group">
+          <a href="#demo" class="btn btn-primary btn-lg">
+            <span>🎮 Try Live Interactive Demo</span>
+          </a>
+          <a href="#desktop-setup" class="btn btn-secondary btn-lg">
+            <span>💻 Get Desktop App</span>
+          </a>
+        </div>
+        <div class="hero-badges">
+          <div class="hero-badge-item">
+            <span class="badge-icon">🎯</span>
+            <div>
+              <strong>100% Vector Art</strong>
+              <span>Smooth procedural QPainter math</span>
+            </div>
+          </div>
+          <div class="hero-badge-item">
+            <span class="badge-icon">📊</span>
+            <div>
+              <strong>Hardware HUD</strong>
+              <span>Real-time CPU, RAM & GPU telemetry</span>
+            </div>
+          </div>
+          <div class="hero-badge-item">
+            <span class="badge-icon">🤖</span>
+            <div>
+              <strong>Multi-LLM AI</strong>
+              <span>Gemini, Claude, OpenAI & Local Ollama</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Demo Section -->
+  <section id="demo" class="demo-section">
+    <div class="container">
+      <div class="section-header text-center">
+        <div class="section-badge">INTERACTIVE PLAYGROUND</div>
+        <h2 class="section-title">Play With Kitty Right In Your Browser!</h2>
+        <p class="section-desc">
+          Move your mouse to watch Kitty's eyes track you. 
+          <strong>Click once</strong> for Hardware Status, <strong>click again</strong> to Chat, or <strong>drag</strong> Kitty around!
+        </p>
+      </div>
+
+      <div class="demo-wrapper">
+        <!-- Kitty Canvas Playground Container -->
+        <div class="demo-stage-card" id="demoStageCard">
+          <div class="demo-stage-header">
+            <div class="stage-window-dots">
+              <span class="dot dot-red"></span>
+              <span class="dot dot-yellow"></span>
+              <span class="dot dot-green"></span>
+            </div>
+            <div class="stage-title-text">
+              <span id="activeBreedLabel">Midnight Black Cat</span>
+              <span class="status-indicator live">● Active</span>
+            </div>
+            <div class="stage-quick-actions">
+              <button class="stage-icon-btn" id="btnToggleSound" title="Toggle Purr/Meow Sounds">🔊</button>
+              <button class="stage-icon-btn" id="btnFloatMode" title="Toggle Floating Screen Companion">🪟 Float on Screen</button>
+            </div>
+          </div>
+
+          <!-- Main Interactive Stage -->
+          <div class="demo-stage-body" id="stageArea">
+            <!-- Instructions overlay (fades out on interaction) -->
+            <div class="stage-hints" id="stageHints">
+              <span class="hint-chip">🐾 Move mouse to track</span>
+              <span class="hint-chip">👆 1st Click: PC Status</span>
+              <span class="hint-chip">💬 2nd Click: Meow Chat</span>
+              <span class="hint-chip">✋ Drag to carry!</span>
+            </div>
+
+            <!-- Canvas Element -->
+            <div class="canvas-anchor" id="kittyAnchor">
+              <!-- Speech Bubble Card (Structured 2x2 box from pet_window) -->
+              <div class="speech-bubble-wrapper" id="speechBubble" style="display: none;">
+                <div class="status-card-header">
+                  <span class="status-cat-badge">🐱 KITTY SYSTEM HUD</span>
+                  <span class="status-time" id="statusClock">12:00</span>
+                </div>
+                <div class="status-grid">
+                  <div class="stat-box cpu-box">
+                    <div class="stat-lbl">CPU USAGE</div>
+                    <div class="stat-val" id="statCpu">18%</div>
+                    <div class="stat-bar"><div class="stat-bar-fill" id="statCpuBar" style="width: 18%"></div></div>
+                  </div>
+                  <div class="stat-box ram-box">
+                    <div class="stat-lbl">RAM USAGE</div>
+                    <div class="stat-val" id="statRam">5.8 GB</div>
+                    <div class="stat-bar"><div class="stat-bar-fill" id="statRamBar" style="width: 36%"></div></div>
+                  </div>
+                  <div class="stat-box gpu-box">
+                    <div class="stat-lbl">GPU STATUS</div>
+                    <div class="stat-val" id="statGpu">24%</div>
+                    <div class="stat-bar"><div class="stat-bar-fill" id="statGpuBar" style="width: 24%"></div></div>
+                  </div>
+                  <div class="stat-box pwr-box">
+                    <div class="stat-lbl">BATTERY</div>
+                    <div class="stat-val" id="statBat">94% ⚡</div>
+                    <div class="stat-bar"><div class="stat-bar-fill" id="statBatBar" style="width: 94%"></div></div>
+                  </div>
+                </div>
+                <div class="status-footer-hint">Click kitty again to open Meow Chat! 💬</div>
+                <div class="bubble-tail"></div>
+              </div>
+
+              <!-- Canvas element where Kitty is drawn -->
+              <canvas id="kittyCanvas" width="220" height="220"></canvas>
+            </div>
+
+            <!-- Floating Meow Chat Window (Mirrors Desktop Chat Dialog) -->
+            <div class="chat-window-card" id="chatWindow" style="display: none;">
+              <div class="chat-header">
+                <div class="chat-title-group">
+                  <span class="chat-avatar">🐾</span>
+                  <div>
+                    <h4 class="chat-title">Kitty Companion AI</h4>
+                    <span class="chat-subtitle">Online • Gemini / Chibi Personality</span>
+                  </div>
+                </div>
+                <button class="chat-close-btn" id="btnCloseChat">✕</button>
+              </div>
+
+              <div class="chat-messages" id="chatMessages">
+                <div class="chat-msg msg-kitty">
+                  <div class="msg-bubble">
+                    Meow! 🐾 I am Kitty, your desktop companion! Click my tummy for system stats or ask me anything!
+                  </div>
+                </div>
+              </div>
+
+              <div class="chat-suggestions">
+                <button class="chip-suggestion" data-prompt="What can you do?">What can you do?</button>
+                <button class="chip-suggestion" data-prompt="Tell me a cat joke!">Cat joke 😹</button>
+                <button class="chip-suggestion" data-prompt="Purr for me!">Purr please 🎶</button>
+                <button class="chip-suggestion" data-prompt="How do I run you on desktop?">Desktop app? 💻</button>
+              </div>
+
+              <form class="chat-input-bar" id="chatForm">
+                <input type="text" id="chatInput" placeholder="Type a message or meow..." autocomplete="off">
+                <button type="submit" class="chat-send-btn">
+                  <span>Send</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                  </svg>
+                </button>
+              </form>
+            </div>
+
+          </div>
+
+          <!-- Stage Controls Toolbar -->
+          <div class="stage-controls">
+            <div class="control-group">
+              <label class="control-label">Coat Skin:</label>
+              <div class="skin-selector" id="skinSelector">
+                <button class="skin-btn active" data-skin="black" title="Midnight Black">
+                  <span class="color-dot" style="background: #1c1c22; border: 1px solid #444;"></span> Black
+                </button>
+                <button class="skin-btn" data-skin="orange" title="Orange Tabby">
+                  <span class="color-dot" style="background: #d9772e;"></span> Orange
+                </button>
+                <button class="skin-btn" data-skin="siamese" title="Siamese">
+                  <span class="color-dot" style="background: #f4ece1; border: 1px solid #4a3728;"></span> Siamese
+                </button>
+                <button class="skin-btn" data-skin="calico" title="Calico">
+                  <span class="color-dot" style="background: linear-gradient(135deg, #ffffff 50%, #d9772e 50%); border: 1px solid #bbb;"></span> Calico
+                </button>
+                <button class="skin-btn" data-skin="mackerel" title="Mackerel Tabby">
+                  <span class="color-dot" style="background: #7f8c8d;"></span> Mackerel
+                </button>
+              </div>
+            </div>
+
+            <div class="control-group action-btns">
+              <button class="btn btn-sm btn-action" id="btnPetKitty">🐾 Pet Kitty (Purr)</button>
+              <button class="btn btn-sm btn-action" id="btnInspectHud">📊 Show Status</button>
+              <button class="btn btn-sm btn-action" id="btnToggleChat">💬 Open Chat</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Highlight -->
+  <section id="features" class="features-section">
+    <div class="container">
+      <div class="section-header text-center">
+        <div class="section-badge">DESKTOP APP CAPABILITIES</div>
+        <h2 class="section-title">Built for Performance, Utility & Joy</h2>
+        <p class="section-desc">
+          Kitty AI isn't just an adorable avatar — it is a fully integrated desktop productivity assistant.
+        </p>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">
+            <span class="feature-icon">🎨</span>
+          </div>
+          <h3 class="feature-title">Pure Procedural Vector Graphics</h3>
+          <p class="feature-text">
+            Rendered natively using PyQt6's <code>QPainter</code> with mathematical Bézier curves and antialiasing. 
+            Zero pixelation, ultra-crisp at any monitor DPI or 4K resolution, and zero motion jitter.
+          </p>
+          <ul class="feature-list">
+            <li>✓ Smooth cursor eye-tracking with slit pupils</li>
+            <li>✓ 80ms natural blink cycle</li>
+            <li>✓ Dangle carrying physics when dragged</li>
+            <li>✓ 5 distinct feline coats + custom RGB fur</li>
+          </ul>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">
+            <span class="feature-icon">⚡</span>
+          </div>
+          <h3 class="feature-title">1st Click: Real-Time Hardware HUD</h3>
+          <p class="feature-text">
+            Single-click Kitty on your desktop to instantly inspect your computer's health without opening heavy task managers.
+          </p>
+          <ul class="feature-list">
+            <li>✓ Real-time CPU % & core loads via <code>psutil</code></li>
+            <li>✓ RAM used/available telemetry</li>
+            <li>✓ Dedicated GPU monitor via <code>GPUtil</code></li>
+            <li>✓ Battery charging percentage & storage metrics</li>
+          </ul>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">
+            <span class="feature-icon">🧠</span>
+          </div>
+          <h3 class="feature-title">2nd Click: Multi-Engine AI Companion</h3>
+          <p class="feature-text">
+            Double-click Kitty to open conversational AI with full memory and personality, powered by the top LLM providers.
+          </p>
+          <ul class="feature-list">
+            <li>✓ Google Gemini (<code>gemini-2.5-flash</code>, <code>1.5-flash</code>)</li>
+            <li>✓ Anthropic Claude & OpenAI GPT-4o</li>
+            <li>✓ Local offline models via Ollama (zero API costs)</li>
+            <li>✓ Persistent chat history in SQLite database</li>
+          </ul>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">
+            <span class="feature-icon">⏱️</span>
+          </div>
+          <h3 class="feature-title">Productivity & Focus Tools</h3>
+          <p class="feature-text">
+            Stay on track with built-in productivity companion tools that live gracefully on top of your workspace.
+          </p>
+          <ul class="feature-list">
+            <li>✓ Floating Pomodoro focus timer with cat notifications</li>
+            <li>✓ Pinned Notes floating right over Kitty's head</li>
+            <li>✓ Quick desktop sticky notes</li>
+            <li>✓ Synthesized purrs and audio alerts via sound engine</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Technical Architecture -->
+  <section id="how-it-works" class="arch-section">
+    <div class="container">
+      <div class="section-header text-center">
+        <div class="section-badge">ARCHITECTURE & STACK</div>
+        <h2 class="section-title">Clean, Modular Python Design</h2>
+        <p class="section-desc">
+          Engineered for low resource consumption (&lt;1% CPU idle) and zero desktop interference.
+        </p>
+      </div>
+
+      <div class="arch-card">
+        <div class="arch-columns">
+          <div class="arch-col">
+            <div class="arch-col-header">
+              <span class="arch-col-badge">Core Engine</span>
+              <h4>Desktop Runtime</h4>
+            </div>
+            <ul class="arch-details">
+              <li><strong>UI Framework:</strong> PyQt6 (Frameless, Translucent, Always-on-Top)</li>
+              <li><strong>Rendering:</strong> Custom procedural <code>QPainter</code> vectors</li>
+              <li><strong>Hardware Monitor:</strong> <code>psutil</code> & <code>GPUtil</code> background worker</li>
+              <li><strong>Audio:</strong> Synthesized frequency sine sweep (Web Audio / Pygame mixer)</li>
+              <li><strong>Storage:</strong> SQLite with thread-safe connection pooling</li>
+            </ul>
+          </div>
+          <div class="arch-col">
+            <div class="arch-col-header">
+              <span class="arch-col-badge">Companion Website</span>
+              <h4>Web Demo & Portfolio</h4>
+            </div>
+            <ul class="arch-details">
+              <li><strong>Engine:</strong> HTML5 2D Canvas rendering matching Python math 1:1</li>
+              <li><strong>Audio Engine:</strong> Web Audio API synthesized purrs & meows</li>
+              <li><strong>Hardware API:</strong> Navigator Battery API + Web Workers</li>
+              <li><strong>Zero Dependencies:</strong> 100% vanilla client-side code</li>
+              <li><strong>Hosting:</strong> 1-click GitHub Pages, Vercel, or Netlify</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How to Run Desktop App -->
+  <section id="desktop-setup" class="setup-section">
+    <div class="container">
+      <div class="section-header text-center">
+        <div class="section-badge">QUICK START</div>
+        <h2 class="section-title">Run Kitty AI on Your Desktop</h2>
+        <p class="section-desc">
+          Have Kitty sit right on your Windows, macOS, or Linux desktop!
+        </p>
+      </div>
+
+      <div class="terminal-card">
+        <div class="terminal-header">
+          <div class="terminal-dots">
+            <span class="dot dot-red"></span>
+            <span class="dot dot-yellow"></span>
+            <span class="dot dot-green"></span>
+          </div>
+          <span class="terminal-title">PowerShell / Command Prompt</span>
+          <button class="copy-code-btn" id="btnCopyCommands">📋 Copy</button>
+        </div>
+        <pre class="terminal-body"><code><span class="c-comment"># 1. Clone the repository</span>
+<span class="c-cmd">git clone</span> https://github.com/HarshBhayani77/kitty.git
+<span class="c-cmd">cd</span> kitty
+
+<span class="c-comment"># 2. Run with 1-click launcher on Windows:</span>
+<span class="c-cmd">.\run.bat</span>
+
+<span class="c-comment"># Or on Linux / macOS:</span>
+<span class="c-cmd">chmod +x</span> run.sh
+<span class="c-cmd">./run.sh</span></code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- Add to Portfolio Section -->
+  <section id="portfolio-embed" class="portfolio-section">
+    <div class="container">
+      <div class="section-header text-center">
+        <div class="section-badge">PORTFOLIO INTEGRATION</div>
+        <h2 class="section-title">Add This Live Demo to Your Portfolio</h2>
+        <p class="section-desc">
+          You can feature this project on your personal portfolio website with a live interactive iframe or project card!
+        </p>
+      </div>
+
+      <div class="portfolio-grid">
+        <div class="portfolio-card">
+          <h4>Option A: Link to GitHub Pages</h4>
+          <p>Deploy to free GitHub Pages so recruiters can click and test it instantly:</p>
+          <div class="code-box">
+            <code>https://HarshBhayani77.github.io/kitty</code>
+          </div>
+          <p class="subtext">Go to your GitHub repo Settings → Pages → Deploy from branch → <code>/docs</code>!</p>
+        </div>
+
+        <div class="portfolio-card">
+          <h4>Option B: Embed Live in Your Portfolio</h4>
+          <p>Paste this responsive iframe code directly into your portfolio HTML:</p>
+          <div class="code-box">
+            <code>&lt;iframe src="https://HarshBhayani77.github.io/kitty" width="100%" height="700" style="border:none; border-radius:16px;"&gt;&lt;/iframe&gt;</code>
+          </div>
+          <p class="subtext">Visitors can pet the cat and test the AI directly on your portfolio site!</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container footer-content">
+      <div class="footer-left">
+        <span class="cat-logo-icon">🐱</span>
+        <span class="footer-brand">Kitty AI Companion</span>
+        <span class="footer-copy">Crafted with passion by <strong>Harsh Bhayani</strong></span>
+      </div>
+      <div class="footer-right">
+        <a href="https://github.com/HarshBhayani77/kitty" target="_blank" rel="noopener noreferrer" class="footer-link">GitHub Repository</a>
+        <span class="footer-sep">•</span>
+        <span class="footer-license">MIT License</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="kitty.js"></script>
+</body>
+</html>
