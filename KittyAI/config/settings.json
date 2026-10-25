@@ -1,0 +1,9 @@
+{
+  "api_key": "",
+  "ai_model": "gpt-4o-mini",
+  "autostart": false,
+  "sound_enabled": true,
+  "volume": 80,
+  "theme": "dark",
+  "pet_skin": "black"
+}

@@ -1,0 +1,48 @@
+# Virtual Environments
+.venv/
+*/.venv/
+venv/
+*/venv/
+env/
+*/env/
+ENV/
+
+# Python cache & compiled files
+__pycache__/
+*/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# SQLite databases & local persistent data
+*.db
+*.db-shm
+*.db-wal
+*.sqlite3
+*.sqlite
+
+# Log files
+*.log
+error.log
+out.log
+
+# IDE & Editor files
+.vscode/
+.claude/
+.idea/
+*.swp
+*.swo
+*~
+
+# Operating system files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Environment variables
+.env
+.env.*
